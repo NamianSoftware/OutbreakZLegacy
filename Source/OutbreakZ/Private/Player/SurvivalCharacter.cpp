@@ -6,7 +6,9 @@
 #include "EnhancedInputSubsystems.h"
 
 #include "Camera/CameraComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 ASurvivalCharacter::ASurvivalCharacter()
 {
@@ -42,11 +44,11 @@ ASurvivalCharacter::ASurvivalCharacter()
 		MeshComp->SetLeaderPoseComponent(GetMesh());
 	}
 
-	for(const auto MeshComp : HiddenFirstPersonMeshComponents)
+	for (const auto MeshComp : HiddenFirstPersonMeshComponents)
 	{
 		MeshComp->bCastHiddenShadow = true;
 	}
-	
+
 #pragma endregion
 
 
@@ -85,6 +87,8 @@ void ASurvivalCharacter::BeginPlay()
 void ASurvivalCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	UpdateActorRotation();
 }
 
 void ASurvivalCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -180,6 +184,28 @@ void ASurvivalCharacter::ToggleNextCameraMode(const FInputActionValue& Value)
 	SwitchCameraMode(NextCameraMode);
 }
 
+void ASurvivalCharacter::UpdateActorRotation()
+{
+	const auto CurrentAcceleration = GetCharacterMovement()->GetCurrentAcceleration();
+	const auto CurrentSpeed = CurrentAcceleration.Size();
+	if (UKismetMathLibrary::LessEqual_DoubleDouble(CurrentSpeed, 0.f)) return;
+
+	const auto RotatorAcceleration = UKismetMathLibrary::MakeRotFromX(CurrentAcceleration);
+	const auto BaseAimRotation = GetBaseAimRotation();
+
+	const auto DirectionAngle = UKismetMathLibrary::NormalizedDeltaRotator(RotatorAcceleration, BaseAimRotation).Yaw;
+	const auto Offset = DirectionCurve->GetFloatValue(DirectionAngle);
+	const auto NewYaw = BaseAimRotation.Yaw + Offset;
+
+	const auto DeltaTime = GetWorld()->GetDeltaSeconds();
+	const auto NewRotation = UKismetMathLibrary::RInterpTo(
+		GetActorRotation(),
+		FRotator(0.f, NewYaw, 0.f),
+		DeltaTime, RotationInterpSpeed);
+	
+	SetActorRotation(NewRotation);
+}
+
 void ASurvivalCharacter::SwitchCameraMode(ECameraMode NewCameraMode)
 {
 	CameraMode = NewCameraMode;
@@ -208,7 +234,7 @@ void ASurvivalCharacter::SwitchCameraMode(ECameraMode NewCameraMode)
 
 	FPCamera->SetActive(bActiveFPCamera);
 	FPCamera->bUsePawnControlRotation = bActiveFPCamera;
-	
+
 	TPCamera->SetActive(bActiveTPCamera);
 	TPCameraBoom->bUsePawnControlRotation = bActiveTPCamera;
 
