@@ -13,7 +13,6 @@
 ASurvivalCharacter::ASurvivalCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	bUseControllerRotationYaw = false;
 
 #pragma region INIT_MESHES
 	HeadMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Head");
@@ -87,8 +86,6 @@ void ASurvivalCharacter::BeginPlay()
 void ASurvivalCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	UpdateActorRotation();
 }
 
 void ASurvivalCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -182,28 +179,6 @@ void ASurvivalCharacter::ToggleNextCameraMode(const FInputActionValue& Value)
 	const ECameraMode NextCameraMode = static_cast<ECameraMode>((static_cast<uint8>(CameraMode) + 1) % static_cast<
 		uint8>(ECameraMode::ECM_NumCameraModes));
 	SwitchCameraMode(NextCameraMode);
-}
-
-void ASurvivalCharacter::UpdateActorRotation()
-{
-	const auto CurrentAcceleration = GetCharacterMovement()->GetCurrentAcceleration();
-	const auto CurrentSpeed = CurrentAcceleration.Size();
-	if (UKismetMathLibrary::LessEqual_DoubleDouble(CurrentSpeed, 0.f)) return;
-
-	const auto RotatorAcceleration = UKismetMathLibrary::MakeRotFromX(CurrentAcceleration);
-	const auto BaseAimRotation = GetBaseAimRotation();
-
-	const auto DirectionAngle = UKismetMathLibrary::NormalizedDeltaRotator(RotatorAcceleration, BaseAimRotation).Yaw;
-	const auto Offset = DirectionCurve->GetFloatValue(DirectionAngle);
-	const auto NewYaw = BaseAimRotation.Yaw + Offset;
-
-	const auto DeltaTime = GetWorld()->GetDeltaSeconds();
-	const auto NewRotation = UKismetMathLibrary::RInterpTo(
-		GetActorRotation(),
-		FRotator(0.f, NewYaw, 0.f),
-		DeltaTime, RotationInterpSpeed);
-	
-	SetActorRotation(NewRotation);
 }
 
 void ASurvivalCharacter::SwitchCameraMode(ECameraMode NewCameraMode)

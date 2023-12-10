@@ -152,13 +152,4 @@ protected:
 	void ToggleNextCameraMode(const FInputActionValue& Value);
 
 #pragma endregion
-
-private:
-	void UpdateActorRotation();
-
-	UPROPERTY(EditDefaultsOnly, Category="Movement")
-	UCurveFloat* DirectionCurve;
-
-	UPROPERTY(EditDefaultsOnly, Category="Movement")
-	float RotationInterpSpeed = 10.f;
 };
