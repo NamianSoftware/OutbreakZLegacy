@@ -12,6 +12,7 @@ class UCameraComponent;
 class USpringArmComponent;
 class UInputAction;
 class UInputMappingContext;
+class USurvivorMovementComponent;
 
 
 UENUM(BlueprintType)
@@ -29,7 +30,7 @@ class OUTBREAKZ_API ASurvivalCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
-	ASurvivalCharacter();
+	ASurvivalCharacter(const FObjectInitializer& ObjectInitializer);
 
 protected:
 	virtual void BeginPlay() override;
@@ -82,6 +83,10 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="Components|Meshes")
 	USkeletalMeshComponent* FeetMesh;
 #pragma endregion
+
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Movement)
+	USurvivorMovementComponent* SurvivorMovementComponent;
 #pragma endregion
 
 private:
@@ -131,15 +136,12 @@ protected:
 	void Move(const FInputActionValue& Value);
 
 	/** Called for looking input */
+	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
 
 	/** Called for jog input */
 	void JogStarted(const FInputActionValue& Value);
 	void JogFinished(const FInputActionValue& Value);
-
-	/** Called for run input */
-	void RunStarted(const FInputActionValue& Value);
-	void RunFinished(const FInputActionValue& Value);
 
 	/** Called for crouch input */
 	void CrouchPressed(const FInputActionValue& Value);

@@ -12,3 +12,7 @@ Saved
 *.suo
 *.xcodeproj
 *.xcworkspace
+/Content/ThirdPerson
+/Content/Characters
+/Content/__ExternalObjects__/ThirdPerson
+/Content/__ExternalActors__/ThirdPerson

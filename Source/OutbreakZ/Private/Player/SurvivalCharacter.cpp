@@ -6,11 +6,12 @@
 #include "EnhancedInputSubsystems.h"
 
 #include "Camera/CameraComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Kismet/KismetMathLibrary.h"
+#include "Player/SurvivorMovementComponent.h"
 
-ASurvivalCharacter::ASurvivalCharacter()
+ASurvivalCharacter::ASurvivalCharacter(const FObjectInitializer& ObjectInitializer)
+: Super(ObjectInitializer.SetDefaultSubobjectClass<USurvivorMovementComponent>(CharacterMovementComponentName))
+
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -50,7 +51,6 @@ ASurvivalCharacter::ASurvivalCharacter()
 
 #pragma endregion
 
-
 #pragma region CAMERA
 	FPCamera = CreateDefaultSubobject<UCameraComponent>("FPCamera");
 	FPCamera->SetupAttachment(HeadMesh, CamaraSocketName);
@@ -65,6 +65,9 @@ ASurvivalCharacter::ASurvivalCharacter()
 	TPCamera = CreateDefaultSubobject<UCameraComponent>("TPCamera");
 	TPCamera->SetupAttachment(TPCameraBoom, TPCameraBoom->SocketName);
 #pragma endregion
+	
+	SurvivorMovementComponent = Cast<USurvivorMovementComponent>(GetCharacterMovement());
+	SurvivorMovementComponent->SetIsReplicated(true);
 }
 
 void ASurvivalCharacter::BeginPlay()
@@ -146,26 +149,39 @@ void ASurvivalCharacter::Look(const FInputActionValue& Value)
 
 void ASurvivalCharacter::JogStarted(const FInputActionValue& Value)
 {
+	if (!Controller) return;
+
+	if (SurvivorMovementComponent->IsCrouching())
+	{
+		SurvivorMovementComponent->StopCrouch();
+		return;
+	}
+
+	SurvivorMovementComponent->StartJog();
 }
 
 void ASurvivalCharacter::JogFinished(const FInputActionValue& Value)
 {
-}
+	if (!Controller) return;
 
-void ASurvivalCharacter::RunStarted(const FInputActionValue& Value)
-{
-}
-
-void ASurvivalCharacter::RunFinished(const FInputActionValue& Value)
-{
+	SurvivorMovementComponent->StopJog();
 }
 
 void ASurvivalCharacter::CrouchPressed(const FInputActionValue& Value)
 {
+	if (!Controller) return;
+
+	SurvivorMovementComponent->ToggleCrouch();
 }
 
 void ASurvivalCharacter::JumpPressed(const FInputActionValue& Value)
 {
+	if (SurvivorMovementComponent->IsCrouching())
+	{
+		SurvivorMovementComponent->StopCrouch();
+		return;
+	}
+
 	ACharacter::Jump();
 }
 
